@@ -8,12 +8,10 @@ import brunojonas1.screenmatch.service.ConsumoApi;
 import brunojonas1.screenmatch.service.ConverteDados;
 import org.springframework.cglib.core.Local;
 
+import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Principal {
@@ -51,6 +49,8 @@ public class Principal {
                 .filter(e -> !e.ratingEpisode().equalsIgnoreCase("N/A"))
                 .sorted(Comparator.comparing(DataEpisodes::ratingEpisode).reversed())
                 .limit(5)
+                .map(e -> e.episodeTitle().toUpperCase())
+                //.peek (e -> System.out::println("Mapeamento " + e)) -> Seria aqui o uso do peek, ele serve para dar uma espiada no que o programa está fazendo
                 .forEach(System.out::println);
 
         List<Episodes> episodes = seasons.stream()
@@ -58,21 +58,45 @@ public class Principal {
                         .map(d -> new Episodes(t.number(), d))
                 ).collect(Collectors.toList());
 
-        episodes.forEach(System.out::println);
+//        episodes.forEach(System.out::println);
 
-        System.out.println("A partir de que ano você quer buscar os episódios?");
-        var year = leitor.nextInt();
-        leitor.nextLine();
+//        System.out.println("A partir de que ano você quer buscar os episódios?");
+//        var year = leitor.nextInt();
+//        leitor.nextLine();
+//
+//        LocalDate sourceDate = LocalDate.of(year,1,1);
+//        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+//
+//        episodes.stream()
+//                .filter(e -> e.getReleased()!= null && e.getReleased().isAfter(sourceDate))
+//                .forEach(e -> System.out.println(
+//                        "Temporada: " + e.getSeason() +
+//                                " Episódio: " + e.getTitle() +
+//                                " Data de Lançamento: " + e.getReleased().format(df)));
+//        System.out.println("Digite um techo do título: ");
+//        var trechoTitulo = leitor.nextLine();
 
-        LocalDate sourceDate = LocalDate.of(year,1,1);
+//        Optional<Episodes> filterEpisiode = episodes.stream()
+//                .filter(e -> e.getTitle().toUpperCase().contains(trechoTitulo.toUpperCase()))
+//                .findFirst();
+//        if (filterEpisiode.isPresent()){
+//            System.out.println("Episódio encontrado!");
+//            System.out.println("Temporada: " + filterEpisiode.get().getSeason());
+//        } else {
+//            System.out.println("Episódio não encontrado :( ");
+//        }
 
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        Map<Integer, Double> ratingForSeason = episodes.stream()
+                .filter(e -> e.getRating() > 0.0)
+                .collect(Collectors.groupingBy(Episodes::getSeason, Collectors.averagingDouble(Episodes::getRating)));
+        System.out.println(ratingForSeason);
 
-        episodes.stream()
-                .filter(e -> e.getReleased()!= null && e.getReleased().isAfter(sourceDate))
-                .forEach(e -> System.out.println(
-                        "Temporada: " + e.getSeason() +
-                                " Episódio: " + e.getTitle() +
-                                " Data de Lançamento: " + e.getReleased().format(df)));
+        DoubleSummaryStatistics est = episodes.stream()
+                .filter(e -> e.getRating() > 0.0)
+                .collect(Collectors.summarizingDouble(Episodes::getRating));
+        System.out.println("Média: " + est.getAverage());
+        System.out.println("Melhor episódio: " + est.getMax());
+        System.out.println("Pior episódio: " + est.getMin());
+        System.out.println("Quantidade: " + est.getCount());
     }
 }
